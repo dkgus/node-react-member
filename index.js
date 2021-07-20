@@ -93,6 +93,20 @@ app.post('/api/users/auth', auth , (req,res)=>{
         role: req.user.role,
         image: req.user.image
     })
-})
+});
+
+
+
+app.get("/api/users/logout", auth, (req, res) => {
+    User.findOneAndUpdate({ _id: req.user._id }, { token: "" }, (err, doc) => {
+                        //여기서 찾는 아이디는  auth미들웨어에서  user를 req.user에 담아줬기때문에 가져와서 찾을 수 있음
+                        //토큰지우기, 유효기간도! 
+                        // tokenExp: "" 일단 주석
+        if (err) return res.json({ success: false, err });
+        return res.status(200).send({
+            success: true
+        });
+    });
+});
 
 app.listen(port, () => console.log(`listening on port ${port}!`))
