@@ -25,6 +25,9 @@ mongoose.connect(config.mongoURI,{
 app.get('/',(req,res)=> res.send('hello world! wow!'));
 app.post('/register',(req,res)=>{
     
+    //회원 가입할 때 필요한 정보를을 client에서 가져오면
+    //그것들을 데이터 베이스에 넣어준다
+    //데이터베이스에 넣기 전에 hash가 적용되어야하기 때문에 save전 단계에서 적용필요
     const user = new User(req.body)
 
     user.save((err,doc)=>{
@@ -34,5 +37,7 @@ app.post('/register',(req,res)=>{
         })
     })
 })
+
+
 
 app.listen(port, () => console.log(`listening on port ${port}!`))
