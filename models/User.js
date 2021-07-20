@@ -1,6 +1,7 @@
 const mongoose =require('mongoose');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+const jwt = require("jsonwebtoken")
 
 const userSchema = mongoose.Schema({
 
@@ -59,6 +60,54 @@ userSchema.pre('save', function (next) { //mongoose에서 가져온 메소드 pr
         next()
     }
 });
+
+
+userSchema.methods.comparePassword = function (plainPassword, cb) { //comparePassword의 이름은 아무거나 변경가능하지만, index(route)파일에서도 변경해줘야함
+                                            //사용자가 입력한 비밀번호와 콜백함수
+    bcrypt.compare(plainPassword, this.password, function (err, isMatch) {
+        //bcrypt.compare를 통해 사용자가입력한 비밀번호(plainPassword),와 해시화 된 비밀번호 (this.password)를 비교가능 
+        
+        if (err) return cb(err);
+        //만약 위에 두개 비교한 것이 일치하지 않는다면 cb(callback)을 통해 err를 리턴하고
+        cb(null, isMatch)//두개 비밀번호가 같다면 cb의 에러는 없고(null), 비밀번호는 같다는 isMatch(true)를 반환
+        //그리고 이것은 다시 index(route)의 comparePassword로 간다
+    })
+}
+
+
+userSchema.methods.generateToken = function (cb) {
+    //jsonwebtoekn을 이용해서 token을 생성하기
+    let user = this;//user 모델 전체를 의미할 수 있게 this하기
+    let token = jwt.sign(user._id.toHexString(), 'secret')//user._id는  db안에 user안에 있는 긴 숫자
+    //let oneHour = moment().add(1, 'hour').valueOf();
+
+   //user.tokenExp = oneHour;
+   
+   //위에 user모델안에 toekn안에 방금 제조한 token변수를 넣어준다는 것임
+    user.token = token;
+    user.save(function (err, user) {//그리고 이것을 save함
+        if (err) return cb(err)
+        cb(null, user);//에러가 null없다면 user정보만 전달 (이 user정보는 index.js(route)안 generateToken에서 인자로받는 user로 전달됨 )
+    })
+}
+
+
+userSchema.statics.findByToken = function (token, cb) {
+    var user = this;
+
+
+    //토큰을 decode한다.  secret은 인코드할때 썼던것
+    jwt.verify(token, 'secret', function (err, decode) {
+
+        //유저아이디를 이용해서 유저를 찾은 뒤(findOne)
+        //클라이언트에서 가져온 token과 DB에 보관된 토큰이 일치하는지 확인
+        user.findOne({ "_id": decode, "token": token }, function (err, user) {
+            if (err) return cb(err);//에러가 있을때
+            cb(null, user);//에러가 없을 때
+        })
+    })
+} 
+
 const User = mongoose.model('User', userSchema);
 
 module.exports = { User }
