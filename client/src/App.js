@@ -3,7 +3,7 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  //Link
 } from "react-router-dom";
 
 import LandingPage from './components/views/LandingPage/LandingPage'
@@ -24,7 +24,7 @@ function App() {
 </Router>
   )}
 
-  
+
 export default App;
 
 
